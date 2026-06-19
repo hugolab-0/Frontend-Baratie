@@ -1,311 +1,149 @@
-// Ativa o modo estrito do JavaScript para evitar erros comuns
 'use strict';
 
-// URL base da API
 const Url = "http://localhost:8080";
 
-// Array que armazenará todos os alimentos recebidos da API
-let alimentos = [];
-
-// Controla qual alimento será exibido a seguir
+let refeicoes = [];
 let indiceAtual = 0;
-
-// Quantidade de cards exibidos a cada clique no botão
 const quantidadePorClique = 6;
 
-// Função responsável por buscar os alimentos na API
-async function carregarDados() {
-
+// ===============================
+// CARREGAR DADOS
+// ===============================
+const carregarDados = async () => {
     try {
 
-        // Faz uma requisição GET para o endpoint de alimentos
-        const response = await fetch(`${Url}/v1/baratie/alimento`);
+        const response = await fetch(`${Url}/v1/baratie/refeicao`);
 
-        // Converte a resposta para JSON
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        // Armazena os alimentos retornados pela API
-        // Tenta primeiro data.alimento
-        // Caso não exista, tenta data.response.alimento
-        // Caso nenhum exista, utiliza um array vazio
-        alimentos = data.alimento || data.response?.alimento || [];
+        console.log("API RESPONSE:", data);
+
+        refeicoes = data?.response?.refeicao || [];
+
+        console.log("REFEIÇÕES:", refeicoes);
+
+        exibirRefeicoes();
 
     } catch (error) {
-
-        // Exibe qualquer erro ocorrido durante a requisição
-        console.error(error);
+        console.error("Erro ao carregar os dados:", error);
     }
-}
+};
 
-// Função responsável por exibir mais marmitas na tela
-async function ListarMarmitas() {
+// ===============================
+// CRIAR CARD
+// ===============================
+// ===============================
+// CRIAR CARD
+// ===============================
+const criarCard = (refeicao) => {
 
-    // Caso os alimentos ainda não tenham sido carregados
-    if (alimentos.length === 0) {
-
-        // Busca os dados da API
-        await carregarDados();
-    }
-
-    // Obtém o container onde os cards serão inseridos
-    const pratosGrid = document.getElementById('pratosGrid');
-
-    // Seleciona os próximos alimentos que serão exibidos
-    const proximosAlimentos = alimentos.slice(
-        indiceAtual,
-        indiceAtual + quantidadePorClique
-    );
-
-    // Percorre cada alimento selecionado
-    proximosAlimentos.forEach(prato => {
-
-        // Calcula as calorias com base nos macronutrientes
-        const calorias =
-            Number(prato.carboidratos_g) * 4 +
-            Number(prato.proteinas_g) * 4 +
-            Number(prato.lipidios_g) * 9;
-
-        // Cria um novo elemento div para o card
-        const card = document.createElement('div');
-
-        // Adiciona as classes CSS do card
-        card.classList.add('prato-card', 'prato-card--destaque');
-
-        // Define o conteúdo HTML do card
-        card.innerHTML = `
-
-            <!-- Imagem do alimento -->
-            <img
-                class="prato-card-img"
-                src="${prato.imagem}"
-                alt="${prato.nome}"
-            >
-
-            <!-- Quantidade de calorias -->
-            <span class="prato-card-kcal">
-                ${Math.round(calorias)} Kcal
-            </span>
-
-            <!-- Nome do alimento -->
-            <h3 class="prato-card-title">
-                ${prato.nome}
-            </h3>
-
-            <!-- Descrição do alimento -->
-            <p class="prato-card-desc">
-                ${prato.descricao ?? ''}
-            </p>
-
-            <!-- Área dos macronutrientes -->
-            <div class="prato-card-macros">
-
-                <!-- Proteínas -->
-                <div class="prato-card-macro-item">
-                    <span class="prato-card-macro-valor">
-                        ${prato.proteinas_g}g
-                    </span>
-                    <span class="prato-card-macro-label">
-                        prot
-                    </span>
-                </div>
-
-                <!-- Carboidratos -->
-                <div class="prato-card-macro-item">
-                    <span class="prato-card-macro-valor">
-                        ${prato.carboidratos_g}g
-                    </span>
-                    <span class="prato-card-macro-label">
-                        carb
-                    </span>
-                </div>
-
-                <!-- Lipídios -->
-                <div class="prato-card-macro-item">
-                    <span class="prato-card-macro-valor">
-                        ${prato.lipidios_g}g
-                    </span>
-                    <span class="prato-card-macro-label">
-                        gord
-                    </span>
-                </div>
-
-            </div>
-        `;
-
-        // Adiciona o card dentro do container
-        pratosGrid.appendChild(card);
-    });
-
-    // Atualiza o índice para os próximos alimentos
-    indiceAtual += quantidadePorClique;
-}
-
-// Adiciona um evento de clique ao botão "Carregar Mais"
-document.getElementById('btnCarregarMais').addEventListener('click', async (e) => {
-
-    // Impede o comportamento padrão do botão
-    e.preventDefault();
-
-    // Carrega mais marmitas
-    await ListarMarmitas();
-});
-
-// Função responsável por exibir um único card
-function exibirCard(prato) {
-
-    // Obtém o container dos cards
-    const pratosGrid = document.getElementById('pratosGrid');
-
-    // Calcula as calorias do alimento
     const calorias =
-        Number(prato.carboidratos_g) * 4 +
-        Number(prato.proteinas_g) * 4 +
-        Number(prato.lipidios_g) * 9;
+        refeicao.calorias ??
+        ((Number(refeicao.proteinas_g) * 4) +
+        (Number(refeicao.carboidratos_g)  * 4)+
+        (Number(refeicao.lipidios_g)  * 9));
 
-    // Cria o card
-    const card = document.createElement('div');
+    const card = document.createElement("div");
+    card.className = "prato-card";
 
-    // Adiciona as classes CSS
-    card.classList.add('prato-card', 'prato-card--destaque');
-
-    // Estrutura HTML do card
     card.innerHTML = `
-
-        <!-- Imagem -->
         <img
             class="prato-card-img"
-            src="${prato.imagem}"
-            alt="${prato.nome}"
+            src="${refeicao.img}"
+            alt="${refeicao.nome}"
         >
 
-        <!-- Calorias -->
         <span class="prato-card-kcal">
             ${Math.round(calorias)} Kcal
         </span>
 
-        <!-- Nome -->
         <h3 class="prato-card-title">
-            ${prato.nome}
+            ${refeicao.nome}
         </h3>
 
-        <!-- Descrição -->
         <p class="prato-card-desc">
-            ${prato.descricao ?? ''}
+            ${refeicao.descricao || ""}
         </p>
 
-        <!-- Macronutrientes -->
         <div class="prato-card-macros">
 
-            <!-- Proteínas -->
             <div class="prato-card-macro-item">
                 <span class="prato-card-macro-valor">
-                    ${prato.proteinas_g}g
+                    ${refeicao.proteinas_g}g
                 </span>
+
                 <span class="prato-card-macro-label">
-                    prot
+                    Prot
                 </span>
             </div>
 
-            <!-- Carboidratos -->
             <div class="prato-card-macro-item">
                 <span class="prato-card-macro-valor">
-                    ${prato.carboidratos_g}g
+                    ${refeicao.carboidratos_g ?? 0}g
                 </span>
+
                 <span class="prato-card-macro-label">
-                    carb
+                    Carb
                 </span>
             </div>
 
-            <!-- Lipídios -->
             <div class="prato-card-macro-item">
                 <span class="prato-card-macro-valor">
-                    ${prato.lipidios_g}g
+                    ${refeicao.lipidios_g ?? 0}g
                 </span>
+
                 <span class="prato-card-macro-label">
-                    gord
+                    Gord
                 </span>
             </div>
 
         </div>
     `;
 
-    // Adiciona o card na tela
-    pratosGrid.appendChild(card);
-}
+    return card;
+};
 
-// Função responsável por exibir 3 alimentos aleatórios ao abrir a página
-async function carregarDestaques() {
+// ===============================
+// EXIBIR NO GRID
+// ===============================
+const exibirRefeicoes = () => {
 
-    // Caso os dados ainda não tenham sido carregados
-    if (alimentos.length === 0) {
+    const container = document.getElementById("pratosGrid");
 
-        // Busca os alimentos na API
-        await carregarDados();
+    if (!container) {
+        console.error("Elemento #pratosGrid não encontrado.");
+        return;
     }
 
-    // Cria uma cópia do array
-    // Embaralha os elementos
-    // Seleciona apenas os 3 primeiros
-    const alimentosAleatorios = [...alimentos]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
+    const fim = Math.min(indiceAtual + quantidadePorClique, refeicoes.length);
 
-    // Exibe os cards sorteados
-    alimentosAleatorios.forEach(exibirCard);
-}
+    for (let i = indiceAtual; i < fim; i++) {
+        container.appendChild(criarCard(refeicoes[i]));
+    }
 
-// Executa quando toda a página terminar de carregar
-window.addEventListener('DOMContentLoaded', async () => {
+    indiceAtual = fim;
 
-    // Exibe os 3 cards aleatórios iniciais
-    await carregarDestaques();
+    if (indiceAtual >= refeicoes.length) {
+        const btn = document.getElementById("btnCarregarMais");
+        if (btn) {
+            btn.style.display = "none";
+        }
+    }
+};
+
+// ===============================
+// BOTÃO CARREGAR MAIS
+// ===============================
+document.getElementById("btnCarregarMais")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    exibirRefeicoes();
 });
 
-/*
-=============================================================================================================
-*/
-
-function renderizarPratos(lista) {
-
-    const pratosGrid = document.getElementById("pratosGrid");
-
-    // Limpa os cards atuais
-    pratosGrid.innerHTML = "";
-
-    // Exibe todos os pratos da lista
-    lista.forEach(exibirCard);
-}
-
-const inputPesquisa = document.getElementById("filtraralimento");
-
-inputPesquisa.addEventListener("input", pesquisarAlimentos);
-
-function pesquisarAlimentos() {
-
-    const texto = inputPesquisa.value
-        .trim()
-        .toLowerCase();
-
-    if (texto === "") {
-
-        renderizarPratos(alimentos);
-        return;
-    }
-
-    const resultados = alimentos.filter(prato =>
-        prato.nome.toLowerCase().includes(texto)
-    );
-
-    if (resultados.length === 0) {
-
-        document.getElementById("pratosGrid").innerHTML = `
-            <p class="sem-resultados">
-                Nenhum alimento encontrado.
-            </p>
-        `;
-
-        return;
-    }
-
-    renderizarPratos(resultados);
-}
+// ===============================
+// INICIALIZAÇÃO
+// ===============================
+window.addEventListener("load", carregarDados);
