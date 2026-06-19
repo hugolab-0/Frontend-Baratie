@@ -171,12 +171,16 @@ if (inputPesquisa) {
         }
 
         const resultados = refeicoes.filter(prato =>
-            prato.nome.toLowerCase().includes(texto)
+            prato.nome.toLowerCase().startsWith(texto)
         );
 
         if (resultados.length === 0) {
             document.getElementById("pratosGrid").innerHTML =
                 `<p class="sem-resultados">Nenhuma refeição encontrada.</p>`;
+
+            const btn = document.getElementById("btnCarregarMais");
+            if (btn) btn.style.display = "none";
+            
             return;
         }
 
